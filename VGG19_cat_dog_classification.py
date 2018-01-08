@@ -18,7 +18,7 @@ from keras.layers import Conv2D, MaxPooling2D
 from keras.models import Model
 from keras.layers import Dense, GlobalAveragePooling2D
 from keras.applications.vgg19 import VGG19
-from keras import backend as K
+import random
 
 from keras.optimizers import SGD
 from keras.utils import np_utils
@@ -36,17 +36,25 @@ def readClass(dirPath):
     for d in dirName:
         classDirPath = os.path.join(dirPath, d)
         classDirPathList.append(classDirPath)
+    #print(classDirPathList)
     return classDirPathList
 
 
-def load_data_RGB(dirPath1, img_rows, img_cols, nb_classes):
-    count = 0
+def load_data_RGB(dirPath1, img_rows, img_cols):
+    nb_classes = 0
     classDirPathList = readClass(dirPath1)
     numpy.save("class.npy", classDirPathList)
     print("class.npy saved")
-    labelList = []
-    imageList = []
-    print(classDirPathList)
+    trainNum=0
+    testNum = 0
+    valNum = 0
+    trainLabelList = []
+    trainImageList = []
+    testLabelList = []
+    testImageList = []
+    valLabelList = []
+    valImageList = []
+    #print(classDirPathList)
     for c in classDirPathList:
         imageAllFile = os.listdir(c)
         for i in imageAllFile:
@@ -54,22 +62,43 @@ def load_data_RGB(dirPath1, img_rows, img_cols, nb_classes):
             img = img.resize((img_rows, img_cols))
             img_ndarray = numpy.asarray(img, dtype='float64') / 256
             if (img_ndarray.shape == (img_rows, img_cols, 3)):
-                imageList.append(img_ndarray)
-                labelList.append(count)
-        count = count + 1
-    featureNumpy1 = numpy.array(imageList)
-    labelNumpy1 = numpy.array(labelList)
-    print(labelNumpy1)
+                ran = random.randint(1, 22);
+                if ran == 1:
+                    testLabelList.append(nb_classes)
+                    testImageList.append(img_ndarray)
+                    testNum = testNum + 1
+                elif ran == 2:
+                    valLabelList.append(nb_classes)
+                    valImageList.append(img_ndarray)
+                    valNum = valNum + 1
+                else:
+                    trainLabelList.append(nb_classes)
+                    trainImageList.append(img_ndarray)
+                    trainNum = trainNum + 1
 
-    labelNumpy1 = labelNumpy1.astype('int64')
-    if nb_classes != 1:
-        labelNumpy1 = np_utils.to_categorical(labelNumpy1, nb_classes)
+        nb_classes = nb_classes + 1
+    trainFeatureNumpy = numpy.array(trainImageList)
+    trainLabelNumpy = numpy.array(trainLabelList)
+    testFeatureNumpy = numpy.array(testImageList)
+    testLabelNumpy = numpy.array(testLabelList)
+    valFeatureNumpy = numpy.array(valImageList)
+    valLabelNumpy = numpy.array(valLabelList)
+    print("testNum = %d" % testNum)
+    print("valNum = %d" % valNum)
+    print("trainNum = %d" % trainNum)
 
-    featureNumpy1 = featureNumpy1.reshape(featureNumpy1.shape[0], img_rows, img_cols, 3)
+    trainLabelNumpy = trainLabelNumpy.astype('int64')
+    testLabelNumpy = testLabelNumpy.astype('int64')
+    valLabelNumpy = valLabelNumpy.astype('int64')
+    trainLabelNumpy = np_utils.to_categorical(trainLabelNumpy, nb_classes)
+    valLabelNumpy = np_utils.to_categorical(valLabelNumpy, nb_classes)
 
-    rval = (featureNumpy1, labelNumpy1)
-    print(labelNumpy1)
-    return rval
+    trainFeatureNumpy = trainFeatureNumpy.reshape(trainFeatureNumpy.shape[0], img_rows, img_cols, 3)
+    testFeatureNumpy = testFeatureNumpy.reshape(testFeatureNumpy.shape[0], img_rows, img_cols, 3)
+    valFeatureNumpy = valFeatureNumpy.reshape(valFeatureNumpy.shape[0], img_rows, img_cols, 3)
+
+    return (trainFeatureNumpy, trainLabelNumpy), (testFeatureNumpy, testLabelNumpy), (
+    valFeatureNumpy, valLabelNumpy), nb_classes
 
 
 def load_predict_data_RGB(dataPath, img_rows, img_cols, nb_classes):
@@ -82,75 +111,6 @@ def load_predict_data_RGB(dataPath, img_rows, img_cols, nb_classes):
     imageList = numpy.array(imageList)
     imageList = imageList.reshape(imageList.shape[0], img_rows, img_cols, 3)
     return imageList
-
-
-def load_data_Grey(dirPath1, dirPath2, dirPath3, img_rows, img_cols, nb_classes):
-    count = 0
-    classDirPathList = readClass(dirPath1)
-    labelList = []
-    imageList = []
-    for c in classDirPathList:
-        imageAllFile = os.listdir(c)
-        for i in imageAllFile:
-            img = Image.open(os.path.join(c, i))
-            img = img.resize((img_rows, img_cols))
-            img_ndarray = numpy.asarray(img, dtype='float64') / 256
-            if (img_ndarray.shape == (img_rows, img_cols, 1)):
-                imageList.append(img_ndarray)
-                labelList.append(count)
-        count = count + 1
-    featureNumpy1 = numpy.array(imageList)
-    labelNumpy1 = numpy.array(labelList)
-
-    count = 0
-    classDirPathList = readClass(dirPath2)
-    labelList = []
-    imageList = []
-    for c in classDirPathList:
-        imageAllFile = os.listdir(c)
-        for i in imageAllFile:
-            img = Image.open(os.path.join(c, i))
-            img = img.resize((img_rows, img_cols))
-            img_ndarray = numpy.asarray(img, dtype='float64') / 256
-            if (img_ndarray.shape == (img_rows, img_cols, 1)):
-                imageList.append(img_ndarray)
-                labelList.append(count)
-        count = count + 1
-    featureNumpy2 = numpy.array(imageList)
-    labelNumpy2 = numpy.array(labelList)
-
-    count = 0
-    classDirPathList = readClass(dirPath3)
-    labelList = []
-    imageList = []
-    for c in classDirPathList:
-        imageAllFile = os.listdir(c)
-        for i in imageAllFile:
-            img = Image.open(os.path.join(c, i))
-            img = img.resize((img_rows, img_cols))
-            img_ndarray = numpy.asarray(img, dtype='float64') / 256
-            if (img_ndarray.shape == (img_rows, img_cols, 1)):
-                imageList.append(img_ndarray)
-                labelList.append(count)
-        count = count + 1
-    featureNumpy3 = numpy.array(imageList)
-    labelNumpy3 = numpy.array(labelList)
-
-    labelNumpy1 = labelNumpy1.astype('int64')
-    labelNumpy2 = labelNumpy2.astype('int64')
-    labelNumpy3 = labelNumpy3.astype('int64')
-
-    labelNumpy1 = np_utils.to_categorical(labelNumpy1, nb_classes)
-    labelNumpy2 = np_utils.to_categorical(labelNumpy2, nb_classes)
-    # labelNumpy3 = np_utils.to_categorical(labelNumpy3, nb_classes)
-
-    featureNumpy1 = featureNumpy1.reshape(featureNumpy1.shape[0], img_rows, img_cols, 3)
-    featureNumpy2 = featureNumpy2.reshape(featureNumpy2.shape[0], img_rows, img_cols, 3)
-    featureNumpy3 = featureNumpy3.reshape(featureNumpy3.shape[0], img_rows, img_cols, 3)
-
-    rval = [(featureNumpy1, labelNumpy1), (featureNumpy2, labelNumpy2), (featureNumpy3, labelNumpy3)]
-
-    return rval
 
 
 def Image_Classification_model(lr=0.005, decay=1e-6, momentum=0.9, nb_classes=2, img_rows=50, img_cols=50, RGB=True):
@@ -214,18 +174,22 @@ def print_result(a, model_url):
 
 
 if __name__ == '__main__':
+    #(X_train, y_train), (X_test, y_test),(X_val, y_val), class_num = load_data_RGB(
+    #    '/home/hydrogen/PycharmProjects/vgg19_dog_cat/cat_dog_Dataset/train', 50, 50)
+
+    #print(class_num)
+
     a = numpy.load("class.npy")
     print(a)
-    # (X_train, y_train) = load_data_RGB('/home/hydrogen/PycharmProjects/vgg19_dog_cat/cat_dog_Dataset/train', 50, 50, 2)
-    # (X_val, y_val) = load_data_RGB('/home/hydrogen/PycharmProjects/vgg19_dog_cat/cat_dog_Dataset/test', 50, 50, 2)
-    # (X_test, y_test) = load_data_RGB('/home/hydrogen/PycharmProjects/vgg19_dog_cat/cat_dog_Dataset/test', 50, 50, 1)
+    class_num = a.size
 
-    model = Image_Classification_model(nb_classes=2, img_rows=50, img_cols=50)
+    model = Image_Classification_model(nb_classes=class_num, img_rows=50, img_cols=50)
+
+    #train_model(model, X_train, y_train, X_val, y_val, 128, 5, 'model_weights.h5')
+    #test_model(X_test, y_test, 'model_weights.h5')
+
+
     model.load_weights('model_weights.h5')
-
-    # train_model(model, X_train, y_train, X_val, y_val, 128, 5, 'model_weights.h5')
-    # test_model(X_test, y_test, 'model_weights.h5')
-
     print_result(a, '/home/hydrogen/PycharmProjects/vgg19_dog_cat/cat_dog_Dataset/submit/2.jpg')
     print_result(a, '/home/hydrogen/PycharmProjects/vgg19_dog_cat/cat_dog_Dataset/submit/3.jpg')
     print_result(a, '/home/hydrogen/PycharmProjects/vgg19_dog_cat/cat_dog_Dataset/submit/4.jpg')
@@ -245,3 +209,4 @@ if __name__ == '__main__':
     print_result(a, '/home/hydrogen/PycharmProjects/vgg19_dog_cat/cat_dog_Dataset/submit/19.jpg')
     print_result(a, '/home/hydrogen/PycharmProjects/vgg19_dog_cat/cat_dog_Dataset/submit/20.jpg')
     print_result(a, '/home/hydrogen/PycharmProjects/vgg19_dog_cat/cat_dog_Dataset/submit/21.jpg')
+
