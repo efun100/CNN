@@ -25,8 +25,11 @@ from keras.utils import np_utils
 
 import os
 
+ROW = 100
+COL = 100
 
-# There are 40 different classes  
+
+# There are 40 different classes
 # input image dimensions  
 # number of convolutional filters to use  
 
@@ -36,7 +39,7 @@ def readClass(dirPath):
     for d in dirName:
         classDirPath = os.path.join(dirPath, d)
         classDirPathList.append(classDirPath)
-    #print(classDirPathList)
+    # print(classDirPathList)
     return classDirPathList
 
 
@@ -45,7 +48,7 @@ def load_data_RGB(dirPath1, img_rows, img_cols):
     classDirPathList = readClass(dirPath1)
     numpy.save("class.npy", classDirPathList)
     print("class.npy saved")
-    trainNum=0
+    trainNum = 0
     testNum = 0
     valNum = 0
     trainLabelList = []
@@ -54,7 +57,7 @@ def load_data_RGB(dirPath1, img_rows, img_cols):
     testImageList = []
     valLabelList = []
     valImageList = []
-    #print(classDirPathList)
+    # print(classDirPathList)
     for c in classDirPathList:
         imageAllFile = os.listdir(c)
         for i in imageAllFile:
@@ -98,10 +101,10 @@ def load_data_RGB(dirPath1, img_rows, img_cols):
     valFeatureNumpy = valFeatureNumpy.reshape(valFeatureNumpy.shape[0], img_rows, img_cols, 3)
 
     return (trainFeatureNumpy, trainLabelNumpy), (testFeatureNumpy, testLabelNumpy), (
-    valFeatureNumpy, valLabelNumpy), nb_classes
+        valFeatureNumpy, valLabelNumpy), nb_classes
 
 
-def load_predict_data_RGB(dataPath, img_rows, img_cols, nb_classes):
+def load_predict_data_RGB(dataPath, img_rows, img_cols):
     imageList = []
     img = Image.open(dataPath)
     img = img.resize((img_rows, img_cols))
@@ -163,8 +166,8 @@ def predict_model(X, model_url):
 
 
 def print_result(a, model_url):
-    pic = load_predict_data_RGB(model_url, 50, 50, 2)
-    result = predict_model(pic, 'model_weights.h5')
+    pic = load_predict_data_RGB(model_url, ROW, COL)
+    result = predict_model(pic, 'model_weights5.h5')
     print(model_url)
     print(result)
     print(numpy.argmax(result))
@@ -174,22 +177,37 @@ def print_result(a, model_url):
 
 
 if __name__ == '__main__':
-    #(X_train, y_train), (X_test, y_test),(X_val, y_val), class_num = load_data_RGB(
-    #    '/home/hydrogen/PycharmProjects/vgg19_dog_cat/cat_dog_Dataset/train', 50, 50)
+    (X_train, y_train), (X_test, y_test), (X_val, y_val), class_num = load_data_RGB('./lfw', ROW, COL)
 
+    # print("class_num = %d" % class_num)
+
+    #a = numpy.load("class.npy")
+    #print(a)
+    #class_num = a.size
     #print(class_num)
 
-    a = numpy.load("class.npy")
-    print(a)
-    class_num = a.size
+    model = Image_Classification_model(nb_classes=class_num, img_rows=ROW, img_cols=COL)
+    model.load_weights('model_weights5.h5')
 
-    model = Image_Classification_model(nb_classes=class_num, img_rows=50, img_cols=50)
+    # train_model(model, X_train, y_train, X_val, y_val, 64, 10, 'model_weights1.h5')
+    # test_model(X_test, y_test, 'model_weights1.h5')
+    # train_model(model, X_train, y_train, X_val, y_val, 64, 10, 'model_weights2.h5')
+    # test_model(X_test, y_test, 'model_weights2.h5')
+    # train_model(model, X_train, y_train, X_val, y_val, 64, 10, 'model_weights3.h5')
+    # test_model(X_test, y_test, 'model_weights3.h5')
+    # train_model(model, X_train, y_train, X_val, y_val, 64, 10, 'model_weights4.h5')
+    # test_model(X_test, y_test, 'model_weights4.h5')
+    # train_model(model, X_train, y_train, X_val, y_val, 64, 10, 'model_weights5.h5')
+    test_model(X_test, y_test, 'model_weights5.h5')
+    quit()
+    #model.load_weights('model_weights5.h5')
 
-    #train_model(model, X_train, y_train, X_val, y_val, 128, 5, 'model_weights.h5')
-    #test_model(X_test, y_test, 'model_weights.h5')
+'''
+    print_result(a, './lfw/Abdullah_al-Attiyah/Abdullah_al-Attiyah_0001.jpg')
+    print_result(a, './lfw/Beth_Blough/Beth_Blough_0001.jpg')
+    print_result(a, './lfw/Chang_Sang/Chang_Sang_0001.jpg')
 
 
-    model.load_weights('model_weights.h5')
     print_result(a, '/home/hydrogen/PycharmProjects/vgg19_dog_cat/cat_dog_Dataset/submit/2.jpg')
     print_result(a, '/home/hydrogen/PycharmProjects/vgg19_dog_cat/cat_dog_Dataset/submit/3.jpg')
     print_result(a, '/home/hydrogen/PycharmProjects/vgg19_dog_cat/cat_dog_Dataset/submit/4.jpg')
@@ -209,4 +227,4 @@ if __name__ == '__main__':
     print_result(a, '/home/hydrogen/PycharmProjects/vgg19_dog_cat/cat_dog_Dataset/submit/19.jpg')
     print_result(a, '/home/hydrogen/PycharmProjects/vgg19_dog_cat/cat_dog_Dataset/submit/20.jpg')
     print_result(a, '/home/hydrogen/PycharmProjects/vgg19_dog_cat/cat_dog_Dataset/submit/21.jpg')
-
+'''
